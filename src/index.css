@@ -1,6 +1,22 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Maplestory";
+  src: url("./assets/fonts/Maplestory_Bold.ttf");
+  font-display: swap;
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: "Maplestory";
+  src: url("./assets/fonts/Maplestory_Lighty.ttf");
+  font-display: swap;
+  font-weight: 500;
+}
+
+body {
+  font-family: "Maplestory", sans-serif;
+}
 
 button {
   outline: none;
