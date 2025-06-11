@@ -10,10 +10,9 @@ type Item = {
   id: string;
   name: string;
   description: string;
-  type: string;
-  itemType: number;
+  itemType: string;
   key: string;
-  grade: number;
+  grade: string;
   image: string;
   createdAt: string;
 };
@@ -24,17 +23,18 @@ type Props = {
   onSave: (item: Item) => void;
 };
 
-const TYPE_OPTIONS = ["aura", "speech_bubble"];
-const ITEM_TYPE_OPTIONS = [{ label: "일반", value: 0 }];
-const GRADE_OPTIONS = [0, 1, 2, 3, 4, 5];
+const ITEM_TYPE_OPTIONS = [
+  { label: "오라", value: "AURA" },
+  { label: "말풍선", value: "SPEECH_BUBBLE" },
+];
+const GRADE_OPTIONS = ["NORMAL", "RARE", "UNIQUE", "EPIC"];
 
 export default function AddEditItemModal({ item, onClose, onSave }: Props) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState("");
-  const [itemType, setItemType] = useState(0);
+  const [itemType, setItemType] = useState("");
   const [keyName, setKeyName] = useState("");
-  const [grade, setGrade] = useState(0);
+  const [grade, setGrade] = useState("");
   const [image, setImage] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -42,7 +42,6 @@ export default function AddEditItemModal({ item, onClose, onSave }: Props) {
     if (item) {
       setName(item.name);
       setDescription(item.description);
-      setType(item.type);
       setItemType(item.itemType);
       setKeyName(item.key);
       setGrade(item.grade);
@@ -58,7 +57,6 @@ export default function AddEditItemModal({ item, onClose, onSave }: Props) {
       id,
       name,
       description,
-      type,
       itemType,
       key: keyName,
       grade,
@@ -94,28 +92,12 @@ export default function AddEditItemModal({ item, onClose, onSave }: Props) {
 
       <div className="flex gap-4">
         <div className="flex-1 space-y-2">
-          <label className="text-sm font-medium text-[#4c3b2b]">타입</label>
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="w-full p-2 rounded-md border border-[#bfae96] bg-[#f9f5ec] text-sm"
-          >
-            <option value="">선택하세요</option>
-            {TYPE_OPTIONS.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex-1 space-y-2">
           <label className="text-sm font-medium text-[#4c3b2b]">
             아이템타입
           </label>
           <select
             value={itemType}
-            onChange={(e) => setItemType(Number(e.target.value))}
+            onChange={(e) => setItemType(e.target.value)}
             className="w-full p-2 rounded-md border border-[#bfae96] bg-[#f9f5ec] text-sm"
           >
             {ITEM_TYPE_OPTIONS.map((opt) => (
@@ -137,7 +119,7 @@ export default function AddEditItemModal({ item, onClose, onSave }: Props) {
           <label className="text-sm font-medium text-[#4c3b2b]">등급</label>
           <select
             value={grade}
-            onChange={(e) => setGrade(Number(e.target.value))}
+            onChange={(e) => setGrade(e.target.value)}
             className="w-full p-2 rounded-md border border-[#bfae96] bg-[#f9f5ec] text-sm"
           >
             {GRADE_OPTIONS.map((g) => (

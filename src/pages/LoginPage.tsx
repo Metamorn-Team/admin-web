@@ -3,24 +3,29 @@
 import { useState } from "react";
 import Input from "../components/common/Input";
 import Button from "../components/common/Button";
+import { login } from "../api/auth";
+import { useNavigate } from "react-router";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email || !password) {
+    if (!username || !password) {
       setError("아이디와 비밀번호를 모두 입력해주세요.");
       return;
     }
 
     try {
-      console.log("로그인 시도", { email, password });
-    } catch (e) {
+      await login({ username, password });
+      navigate("/main");
+    } catch (e: unknown) {
       setError("로그인에 실패했습니다.");
+      console.error(e);
     }
   };
 
@@ -41,9 +46,9 @@ export default function LoginPage() {
             아이디
           </label>
           <Input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             placeholder="admin@example.com"
             className="rounded-full text-base px-4 py-3 w-full"
           />

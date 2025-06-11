@@ -10,7 +10,9 @@ const mockItems = [
 ];
 
 export default function ProductPanel() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [products, setProducts] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editProduct, setEditProduct] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);

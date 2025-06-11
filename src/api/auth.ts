@@ -4,3 +4,7 @@ import { http } from "./http";
 export const login = async (body: LoginRequest) => {
   await http.post("/auth/login", body);
 };
+
+export const checkAuth = async () => {
+  await http.get("/auth/session");
+};

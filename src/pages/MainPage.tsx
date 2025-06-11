@@ -1,19 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "../components/common/Button";
-import ImageInput from "../components/common/ImageInput";
+// import ImageInput from "../components/common/ImageInput";
 import ItemPanel from "../components/item/ItemPanel";
 import ProductPanel from "../components/product/ProductPanel";
 import PromotionPanel from "../components/promotion/PromotionPanel";
+import { useNavigate } from "react-router";
+import { checkAuth } from "../api/auth";
 
 const MENU_ITEMS = ["아이템", "상품", "프로모션"];
 
 export default function MainPage() {
   const [activeTab, setActiveTab] = useState("아이템");
-  const [search, setSearch] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  // const [search, setSearch] = useState("");
+  // const [imageFile, setImageFile] = useState<File | null>(null);
   const [menuOpen, setMenuOpen] = useState(true); // ← 메뉴 상태 추가
+  const navigate = useNavigate();
+
+  const chekcLogin = async () => {
+    try {
+      await checkAuth();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_: unknown) {
+      navigate("/");
+    }
+  };
+
+  useEffect(() => {
+    chekcLogin();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#fcf9f4] flex relative">

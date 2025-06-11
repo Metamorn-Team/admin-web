@@ -6,7 +6,9 @@ import Button from "../common/Button";
 import AddEditPromotionModal from "./AddEditPromotionModal";
 
 export default function PromotionPanel() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [promotions, setPromotions] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editPromotion, setEditPromotion] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
