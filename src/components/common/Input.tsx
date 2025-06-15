@@ -2,7 +2,11 @@
 
 import classNames from "classnames";
 
-type InputProps = {
+interface InputProps
+  extends React.DetailedHTMLProps<
+    React.InputHTMLAttributes<HTMLInputElement>,
+    HTMLInputElement
+  > {
   value: string | number;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   type?: string;
@@ -12,7 +16,7 @@ type InputProps = {
   maxLength?: number;
   error?: boolean;
   className?: string;
-};
+}
 
 export default function Input({
   value,
@@ -24,6 +28,7 @@ export default function Input({
   maxLength,
   error = false,
   className,
+  ...rest
 }: InputProps) {
   return (
     <input
@@ -34,6 +39,7 @@ export default function Input({
       required={required}
       minLength={minLength}
       maxLength={maxLength}
+      {...rest}
       className={classNames(
         `w-full p-2 rounded-md outline-none transition bg-[#f9f5ec]
          ${error ? "border-red-500" : "border-[#bfae96]"}

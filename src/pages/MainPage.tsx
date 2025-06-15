@@ -8,8 +8,10 @@ import ProductPanel from "../components/product/ProductPanel";
 import PromotionPanel from "../components/promotion/PromotionPanel";
 import { useNavigate } from "react-router";
 import { checkAuth } from "../api/auth";
+import UserPanel from "../components/user/UserPanel";
+import PromotionProductPanel from "../components/promotion-product/PromotionProductPanel";
 
-const MENU_ITEMS = ["아이템", "상품", "프로모션"];
+const MENU_ITEMS = ["유저", "아이템", "상품", "프로모션", "프로모션 상품"];
 
 export default function MainPage() {
   const [activeTab, setActiveTab] = useState("아이템");
@@ -69,6 +71,12 @@ export default function MainPage() {
           {activeTab} 관리
         </h1>
 
+        {activeTab === "유저" && (
+          <div className="space-y-4">
+            <UserPanel />
+          </div>
+        )}
+
         {activeTab === "아이템" && (
           <div className="space-y-4">
             <ItemPanel />
@@ -84,6 +92,12 @@ export default function MainPage() {
         {activeTab === "프로모션" && (
           <div className="space-y-4">
             <PromotionPanel />
+          </div>
+        )}
+
+        {activeTab === "프로모션 상품" && (
+          <div className="space-y-4">
+            <PromotionProductPanel />
           </div>
         )}
       </main>

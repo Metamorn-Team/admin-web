@@ -3,17 +3,11 @@ import Table from "../common/Table";
 import Button from "../common/Button";
 import Modal from "../common/Modal";
 import AddEditProductModal from "./AddEditProductModal";
-
-const mockItems = [
-  { id: "1", name: "강화검" },
-  { id: "2", name: "방패" },
-];
+import { useGetAllProduct } from "../hook/query/useGetAllProduct";
+import type { ProductItem } from "lia-admin-type";
 
 export default function ProductPanel() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [products, setProducts] = useState<any[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [editProduct, setEditProduct] = useState<any | null>(null);
+  const [editProduct, setEditProduct] = useState<ProductItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
@@ -31,56 +25,16 @@ export default function ProductPanel() {
         </Button>
       </div>
 
-      <Table
-        headers={["이름", "가격", "아이템", "이미지", "액션"]}
-        rows={products.map((p) => [
-          p.name,
-          `₩${p.price.toLocaleString()}`,
-          mockItems.find((i) => i.id === p.itemId)?.name || "-",
-          <img
-            src={p.coverImage}
-            className="w-12 h-12 object-contain cursor-pointer"
-            onClick={() => setPreviewImage(p.coverImage)}
-          />,
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setEditProduct(p);
-                setIsModalOpen(true);
-              }}
-            >
-              수정
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() =>
-                setProducts(products.filter((pr) => pr.id !== p.id))
-              }
-            >
-              삭제
-            </Button>
-          </div>,
-        ])}
+      <ProductTable
+        openModal={() => setIsModalOpen(true)}
+        setEditProduct={setEditProduct}
+        setPreviewImage={setPreviewImage}
       />
 
       {isModalOpen && (
         <AddEditProductModal
           product={editProduct}
-          items={mockItems}
           onClose={() => setIsModalOpen(false)}
-          onSave={(newProduct) => {
-            setProducts((prev) => {
-              const exists = prev.find((p) => p.id === newProduct.id);
-              if (exists) {
-                return prev.map((p) =>
-                  p.id === newProduct.id ? newProduct : p
-                );
-              }
-              return [...prev, newProduct];
-            });
-            setIsModalOpen(false);
-          }}
         />
       )}
 
@@ -94,5 +48,64 @@ export default function ProductPanel() {
         </Modal>
       )}
     </>
+  );
+}
+
+interface ProductTableProps {
+  setPreviewImage: React.Dispatch<React.SetStateAction<string | null>>;
+  setEditProduct: React.Dispatch<React.SetStateAction<ProductItem | null>>;
+  openModal: () => void;
+}
+
+function ProductTable({
+  setEditProduct,
+  setPreviewImage,
+  openModal,
+}: ProductTableProps) {
+  const { data: products = [] } = useGetAllProduct();
+
+  return (
+    <Table
+      headers={[
+        "NUM",
+        "이름",
+        "종류",
+        "설명",
+        "가격",
+        "아이템",
+        "이미지",
+        "추가일",
+        "액션",
+      ]}
+      rows={products.map((p, i) => [
+        i + 1,
+        p.name,
+        p.type,
+        p.description,
+        `${p.price.toLocaleString()}G`,
+        p.itemName,
+        <img
+          key={p.id}
+          src={p.coverImage}
+          className="w-12 h-12 object-contain cursor-pointer"
+          onClick={() => setPreviewImage(p.coverImage)}
+        />,
+        new Date(p.createdAt).toLocaleDateString(),
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setEditProduct(p);
+              openModal();
+            }}
+          >
+            수정
+          </Button>
+          <Button variant="ghost" onClick={() => alert("삭제 로직 필요")}>
+            삭제
+          </Button>
+        </div>,
+      ])}
+    />
   );
 }

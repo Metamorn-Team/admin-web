@@ -4,75 +4,128 @@ import Button from "../common/Button";
 import ImageInput from "../common/ImageInput";
 import Modal from "../common/Modal";
 import Select from "../common/Select";
+import type {
+  AddProductRequest,
+  ProductItem,
+  UpdateProductRequest,
+} from "lia-admin-type";
+import { useAddProduct } from "../hook/query/useAddProduct";
+import { useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEY as ALL_PRODUCT_QUERY_KEY } from "../hook/query/useGetAllProduct";
+import { useGetAllItem } from "../hook/query/useGetAllItem";
+import { getPresignedUrl, uploadImage } from "../../api/file";
+import { BUCKET_PATH, CDN_URL } from "../../constants/url";
+import type { ProductType } from "lia-admin-type/dist/src/types/product";
+import { useUpdateProduct } from "../hook/query/useUpdateProduct";
 
 const PRODUCT_TYPE_OPTIONS = [
-  { label: "일반", value: 0 },
-  { label: "한정", value: 1 },
+  { label: "오라", value: "AURA" } as const,
+  { label: "말풍선", value: "SPEECH_BUBBLE" } as const,
 ];
 
-type Product = {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  productType: number;
-  coverImage: string;
-  itemId: string;
-  item?: { id: string; name: string };
-  createdAt: string;
-  updatedAt: string;
-};
-
 type Props = {
-  product: Product | null;
-  items: { id: string; name: string }[];
+  product: ProductItem | null;
   onClose: () => void;
-  onSave: (product: Product) => void;
 };
 
-// item은 실제 아이템 리스트
-export default function AddEditProductModal({
-  product,
-  items,
-  onClose,
-  onSave,
-}: Props) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState(0);
-  const [productType, setProductType] = useState(0);
-  const [coverImage, setCoverImage] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [itemId, setItemId] = useState("");
+export default function AddEditProductModal({ product, onClose }: Props) {
+  const queryClient = useQueryClient();
+  const { data: items } = useGetAllItem();
+  const { mutate: addProductMutate } = useAddProduct(() => {
+    queryClient.invalidateQueries({ queryKey: [ALL_PRODUCT_QUERY_KEY] });
+  });
+  const { mutate: updateProductMutate } = useUpdateProduct(() => {
+    queryClient.invalidateQueries({ queryKey: [ALL_PRODUCT_QUERY_KEY] });
+  });
+
+  const [newProduct, setNewProduct] = useState<
+    Partial<AddProductRequest> & { id?: string }
+  >({});
+
+  const onChange = <T extends AddProductRequest, K extends keyof T>(
+    key: K,
+    value: T[K]
+  ) => {
+    setNewProduct({
+      ...newProduct,
+      [key]: value,
+    });
+  };
+
+  const isValid = (
+    newProduct: Partial<AddProductRequest>
+  ): newProduct is AddProductRequest => {
+    if (!newProduct.name || newProduct.name.trim().length === 0) {
+      throw new Error("상품명을 입력해주세요.");
+    }
+    if (!newProduct.description || newProduct.description.trim().length === 0) {
+      throw new Error("상품 설명을 입력해주세요.");
+    }
+    if (
+      typeof newProduct.price !== "number" ||
+      isNaN(newProduct.price) ||
+      newProduct.price < 0
+    ) {
+      throw new Error("유효한 상품 가격을 입력해주세요.");
+    }
+    if (!newProduct.productType) {
+      throw new Error("상품 타입을 선택해주세요.");
+    }
+    if (!newProduct.itemId || newProduct.itemId.trim().length === 0) {
+      throw new Error("연결된 아이템을 선택해주세요.");
+    }
+
+    return true;
+  };
 
   useEffect(() => {
     if (product) {
-      setName(product.name);
-      setDescription(product.description);
-      setPrice(product.price);
-      setProductType(product.productType);
-      setCoverImage(product.coverImage);
-      setItemId(product.itemId);
+      setNewProduct({
+        ...product,
+        productType: product.type,
+        id: product.id,
+      });
     }
   }, [product]);
 
+  const handleImageChange = async (file: File | null) => {
+    if (!newProduct.productType) {
+      alert("종류를 먼저 선택해주세요");
+      return;
+    }
+
+    try {
+      const data = await getPresignedUrl({
+        path: BUCKET_PATH[newProduct.productType],
+        name: file?.name || crypto.randomUUID(),
+      });
+      const { presignedUrl, key } = data;
+
+      if (!file) {
+        console.error("file not found");
+        return;
+      }
+
+      await uploadImage(presignedUrl, file);
+
+      onChange("coverImage", `${CDN_URL}/${key}`);
+    } catch (e) {
+      console.error(e);
+      return;
+    }
+  };
+
   const handleSubmit = () => {
-    const now = new Date().toISOString();
-    const id = product?.id || crypto.randomUUID();
-
-    const newProduct: Product = {
-      id,
-      name,
-      description,
-      price,
-      productType,
-      coverImage: imageFile ? URL.createObjectURL(imageFile) : coverImage,
-      itemId,
-      createdAt: product?.createdAt || now,
-      updatedAt: now,
-    };
-
-    onSave(newProduct);
+    try {
+      isValid(newProduct);
+      if (product && newProduct.id) {
+        updateProductMutate(newProduct as UpdateProductRequest);
+      } else {
+        addProductMutate(newProduct as AddProductRequest);
+      }
+    } catch (err) {
+      alert((err as Error).message);
+    }
   };
 
   return (
@@ -86,41 +139,42 @@ export default function AddEditProductModal({
       </h2>
 
       <Input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
+        value={newProduct.name || ""}
+        onChange={(e) => onChange("name", e.target.value)}
         placeholder="상품명"
       />
       <Input
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
+        value={newProduct.description || ""}
+        onChange={(e) => onChange("description", e.target.value)}
         placeholder="설명"
       />
       <Input
         type="number"
-        value={price}
-        onChange={(e) => setPrice(Number(e.target.value))}
+        value={newProduct.price ?? 200}
+        onChange={(e) => onChange("price", Number(e.target.value))}
         placeholder="가격"
       />
 
       <Select
-        value={productType}
-        onChange={(val) => setProductType(Number(val))}
+        value={newProduct.productType || "AURA"}
+        onChange={(val) => onChange("productType", val as ProductType)}
         options={PRODUCT_TYPE_OPTIONS}
         placeholder="상품 타입 선택"
       />
 
       <Select
-        value={itemId}
-        onChange={(val) => setItemId(String(val))}
+        value={newProduct.itemId || ""}
+        onChange={(val) => onChange("itemId", String(val))}
         options={items.map((item) => ({ label: item.name, value: item.id }))}
         placeholder="연결된 아이템 선택"
       />
 
+      <p className="text-red-600">
+        🔴 이미지를 등록하지 않으면 자동으로 아이템 이미지 사용 🔴
+      </p>
       <ImageInput
-        previewUrl={
-          imageFile ? URL.createObjectURL(imageFile) : coverImage || undefined
-        }
-        onChange={(file) => setImageFile(file)}
+        previewUrl={newProduct.coverImage || ""}
+        onChange={handleImageChange}
       />
 
       <div className="flex justify-end gap-2">

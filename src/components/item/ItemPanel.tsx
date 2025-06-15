@@ -1,22 +1,33 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { Suspense, useState } from "react";
 import ImagePreviewModal from "../common/ImagePreviewModal";
 import Table from "../common/Table";
 import Button from "../common/Button";
 import AddEditItemModal from "./AddEditItemModal";
 import { useGetAllItem } from "../hook/query/useGetAllItem";
+import { useAddItem } from "../hook/query/useAddItem";
+import { QUERY_KEY as ALL_ITEM_QUERY_KEY } from "../hook/query/useGetAllItem";
+import type { ItemGrade, ItemType } from "lia-admin-type/dist/src/types/item";
 
-type Item = {
+export type Item = {
   id: string;
   name: string;
   description: string;
-  itemType: string;
+  itemType: ItemType;
   key: string;
-  grade: string;
+  grade: ItemGrade;
   image: string;
   createdAt: string;
 };
 
 export default function ItemPanel() {
+  const queryClient = useQueryClient();
+  const { mutate: addItemMutate } = useAddItem(() => {
+    queryClient.invalidateQueries({
+      queryKey: [ALL_ITEM_QUERY_KEY],
+    });
+  });
+
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [editItem, setEditItem] = useState<Item | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -30,9 +41,8 @@ export default function ItemPanel() {
     setIsModalOpen(false);
   };
 
-  const handleSave = (newItem: Item) => {
-    // TODO: 실제 API 호출로 대체 필요
-    console.log("저장됨:", newItem);
+  const handleSave = async (newItem: Item) => {
+    addItemMutate(newItem);
     setIsModalOpen(false);
   };
 
@@ -99,7 +109,7 @@ function ItemTable({ setPreviewUrl, setEditItem, openModal }: ItemTableProps) {
         "액션",
       ]}
       rows={items.map((item, i) => [
-        i,
+        i + 1,
         item.name,
         item.description,
         item.type,

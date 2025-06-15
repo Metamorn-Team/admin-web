@@ -5,17 +5,10 @@ import Input from "../common/Input";
 import Button from "../common/Button";
 import ImageInput from "../common/ImageInput";
 import Modal from "../common/Modal";
-
-type Item = {
-  id: string;
-  name: string;
-  description: string;
-  itemType: string;
-  key: string;
-  grade: string;
-  image: string;
-  createdAt: string;
-};
+import type { Item } from "./ItemPanel";
+import type { ItemGrade, ItemType } from "lia-admin-type/dist/src/types/item";
+import { getPresignedUrl, uploadImage } from "../../api/file";
+import { BUCKET_PATH, CDN_URL } from "../../constants/url";
 
 type Props = {
   item: Item | null; // null이면 추가, 있으면 수정
@@ -32,11 +25,10 @@ const GRADE_OPTIONS = ["NORMAL", "RARE", "UNIQUE", "EPIC"];
 export default function AddEditItemModal({ item, onClose, onSave }: Props) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [itemType, setItemType] = useState("");
+  const [itemType, setItemType] = useState<ItemType>("AURA");
   const [keyName, setKeyName] = useState("");
-  const [grade, setGrade] = useState("");
+  const [grade, setGrade] = useState<ItemGrade>("NORMAL");
   const [image, setImage] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (item) {
@@ -49,6 +41,28 @@ export default function AddEditItemModal({ item, onClose, onSave }: Props) {
     }
   }, [item]);
 
+  const handleImageChange = async (file: File | null) => {
+    try {
+      const data = await getPresignedUrl({
+        path: BUCKET_PATH[itemType],
+        name: file?.name || crypto.randomUUID(),
+      });
+      const { presignedUrl, key } = data;
+
+      if (!file) {
+        console.error("file not found");
+        return;
+      }
+
+      await uploadImage(presignedUrl, file);
+
+      setImage(`${CDN_URL}/${key}`);
+    } catch (e) {
+      console.error(e);
+      return;
+    }
+  };
+
   const handleSubmit = () => {
     const id = item?.id || crypto.randomUUID();
     const createdAt = item?.createdAt || new Date().toISOString();
@@ -60,10 +74,11 @@ export default function AddEditItemModal({ item, onClose, onSave }: Props) {
       itemType,
       key: keyName,
       grade,
-      image: imageFile ? URL.createObjectURL(imageFile) : image,
+      image,
       createdAt,
     };
 
+    console.log(newItem);
     onSave(newItem);
   };
 
@@ -97,7 +112,7 @@ export default function AddEditItemModal({ item, onClose, onSave }: Props) {
           </label>
           <select
             value={itemType}
-            onChange={(e) => setItemType(e.target.value)}
+            onChange={(e) => setItemType(e.target.value as ItemType)}
             className="w-full p-2 rounded-md border border-[#bfae96] bg-[#f9f5ec] text-sm"
           >
             {ITEM_TYPE_OPTIONS.map((opt) => (
@@ -119,12 +134,12 @@ export default function AddEditItemModal({ item, onClose, onSave }: Props) {
           <label className="text-sm font-medium text-[#4c3b2b]">등급</label>
           <select
             value={grade}
-            onChange={(e) => setGrade(e.target.value)}
+            onChange={(e) => setGrade(e.target.value as ItemGrade)}
             className="w-full p-2 rounded-md border border-[#bfae96] bg-[#f9f5ec] text-sm"
           >
             {GRADE_OPTIONS.map((g) => (
               <option key={g} value={g}>
-                {g}등급
+                {g}
               </option>
             ))}
           </select>
@@ -133,14 +148,7 @@ export default function AddEditItemModal({ item, onClose, onSave }: Props) {
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-[#4c3b2b]">이미지</label>
-        <ImageInput
-          previewUrl={
-            imageFile ? URL.createObjectURL(imageFile) : image || undefined
-          }
-          onChange={(file) => {
-            setImageFile(file);
-          }}
-        />
+        <ImageInput previewUrl={image} onChange={handleImageChange} />
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
