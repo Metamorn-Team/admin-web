@@ -12,8 +12,10 @@ import type { UserItem } from "lia-admin-type";
 import { PAWN_AVATAR_URL } from "../../constants/url";
 
 export default function UserPanel() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editUser, setEditUser] = useState<UserItem | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [, setIsModalOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [, setEditUser] = useState<UserItem | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const [page, setPage] = useState(1);

@@ -1,4 +1,3 @@
-export const API_URL = "http://localhost:8000/admin";
 export const CDN_URL = "https://cdn.metamorn.com";
 export const BUCKET_PATH = {
   AURA: "product/aura",
